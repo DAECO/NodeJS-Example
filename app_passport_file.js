@@ -1,16 +1,28 @@
 var express = require('express');
 var session = require('express-session');
+// MySQLStore = require('express-mysql-session')(session);
 var FileStore = require('session-file-store')(session);
 var bodyParser = require('body-parser');
 var bkfd2Password = require("pbkdf2-password");
 var passport = require('passport')
 var LocalStrategy = require('passport-local').Strategy;
+var FacebookStrategy = require('passport-facebook').Strategy;
+
+
+// var options = {
+//  host: 'localhost',
+//  port: 3306,
+//  user: 'root',
+//  password: '000005',
+//  database: 'o2'
+// };
 
 var hasher = bkfd2Password();
 var app = express();
 
 var users = [
   {
+    authId:'local:egoing',
     username:'egoing',
     password:'M9jRq5StfoKhAOnjlXfT+rqz1EhJyUSS/nzfpe4LSLLaqfSiEKNYQp/JP+vZ3BN9N9oGgRIJvjbQk0STRW3w6i+tXVmdLJdqs3abIa7TLulAFYfI97SWzwcUP1LBV1STUPq6A5eIS/XRE1Q3DQieLWt3FqXNuQe0HgXqlWTeOH4=',
     salt:'wxcOZO7ez5o2YzgHa1bojyykbigu2o30/OoXwUO82fiGwcgEeqVqTWZw+jFSbm126bZqtPjIOTArnKlV59rcVw==',
@@ -24,7 +36,8 @@ app.use(session({
   resave: false,  // 사용할 때마다 새로 발급 할 것인지
   saveUninitialized: true,  // session id를 실제 사용 전까지 발급하지 말아라
   //cookie: { secure: true }
-  store:new FileStore()
+  //store: new MySQLStore(options)
+  store: new FileStore()
 }));
 app.use(passport.initialize());
 app.use(passport.session());  // app.use(session(){}) 뒤에 선언해야함.
@@ -47,6 +60,7 @@ app.get('/auth/logout', function(req,res){
 
 app.get('/welcome', function(req,res){
   if(req.user && req.user.displayName){
+    console.log('cur session : ',req.session);
     res.send(`
       <h1>Hello, ${req.user.displayName}</h1>
       <a href="/auth/logout">Logout</a>
@@ -65,6 +79,7 @@ app.get('/welcome', function(req,res){
 app.post('/auth/register', function(req,res){
   hasher({password:req.body.password}, function(err, pass, salt, hash){
     var user = {
+      authId:'local:'+req.body.username,
       username:req.body.username,
       password:hash,
       salt:salt,
@@ -105,14 +120,14 @@ app.get('/auth/register', function(req,res){
 
 passport.serializeUser(function(user, done) {
   console.log('serializeUser : ', user);
-  done(null, user.username);
+  done(null, user.authId);
 });
 
 passport.deserializeUser(function(id, done) {
   console.log('deserializeUser : ', id);
   for(var i=0; i<users.length; i++){
     var user = users[i];
-    if(user.username == id){
+    if(user.authId == id){
       return done(null, user);
     }
   }
@@ -139,6 +154,29 @@ passport.use(new LocalStrategy(
   }
 ));
 
+passport.use(new FacebookStrategy({
+    clientID: '889821817791096',
+    clientSecret: '73c16ef349bf659de1b6ebc4754222f8',
+    callbackURL: "/auth/facebook/callback"
+  },
+  function(accessToken, refreshToken, profile, done) {
+    console.log(profile);
+    var authId = 'facebook:'+profile.id;
+    for(var i=0; i<users.length; i++){
+      var user = users[i];
+      if(user.authId == authId){
+        return done(null, user);
+      }
+    }
+    var newuser = {
+      'authId':authId,
+      'displayName':profile.displayName,
+    };
+    users.push(newuser);
+    done(null, newuser);
+  }
+));
+
 app.post(
   '/auth/login',
   passport.authenticate(
@@ -150,26 +188,24 @@ app.post(
     }
   )
 );
-// app.post('/auth/login', function(req,res){
-//   var uname = req.body.username;
-//   var pwd = req.body.password;
-//   for(var i=0; i<users.length; i++){
-//     var user = users[i];
-//     if(uname == user.username){
-//       return hasher({password:pwd, salt:user.salt}, function(err,pass,salt,hash){
-//         if(hash == user.password){
-//           req.session.displayName = user.displayName;
-//           req.session.save(function(){
-//             res.redirect('/welcome');  // redirect() 만으로는 반목문이 종료되지 않음.
-//           });
-//         } else {
-//           res.send('Who are you? <a href="/auth/login">login</a>');
-//         }
-//       });
-//     }
-//   }
-//   res.send('Who are you? <a href="/auth/login">login</a>');
-// });
+
+app.get(
+  '/auth/facebook',
+  passport.authenticate(
+    'facebook'
+  )
+);
+
+app.get(
+  '/auth/facebook/callback',
+  passport.authenticate(
+    'facebook',
+    {
+      successRedirect: '/welcome',
+      failureRedirect: '/auth/login'
+    }
+  )
+);
 
 app.get('/auth/login', function(req,res){
   var output = `
@@ -187,6 +223,7 @@ app.get('/auth/login', function(req,res){
       <input type="submit">
     </p>
   </form>
+  <a href="/auth/facebook">facebook</a>
   `
   res.send(output);
 });
