@@ -10,11 +10,11 @@ var FacebookStrategy = require('passport-facebook').Strategy;
 
 
 // var options = {
-//  host: 'localhost',
-//  port: 3306,
-//  user: 'root',
-//  password: '000005',
-//  database: 'o2'
+// 	host: 'localhost',
+// 	port: 3306,
+// 	user: 'root',
+// 	password: '000005',
+// 	database: 'o2'
 // };
 
 var hasher = bkfd2Password();
@@ -131,6 +131,7 @@ passport.deserializeUser(function(id, done) {
       return done(null, user);
     }
   }
+  done('There is no user.');
 });
 
 passport.use(new LocalStrategy(
@@ -157,7 +158,8 @@ passport.use(new LocalStrategy(
 passport.use(new FacebookStrategy({
     clientID: '889821817791096',
     clientSecret: '73c16ef349bf659de1b6ebc4754222f8',
-    callbackURL: "/auth/facebook/callback"
+    callbackURL: "/auth/facebook/callback",
+    profileFields:['id', 'email', 'gender', 'link', 'locale', 'name', 'timezone', 'updated_time', 'verified', 'displayName'] // profile 정보 명시적 추가
   },
   function(accessToken, refreshToken, profile, done) {
     console.log(profile);
@@ -171,6 +173,7 @@ passport.use(new FacebookStrategy({
     var newuser = {
       'authId':authId,
       'displayName':profile.displayName,
+      'email':profile.emails[0].value
     };
     users.push(newuser);
     done(null, newuser);
@@ -192,7 +195,8 @@ app.post(
 app.get(
   '/auth/facebook',
   passport.authenticate(
-    'facebook'
+    'facebook',
+    {scope:'email'}
   )
 );
 
