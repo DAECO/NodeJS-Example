@@ -4,7 +4,9 @@ html
     meta(charset='utf-8')
   body
     if user
-      h1 Hello, #{user.displayName}
+      h1 Hello, #{user.displayName}!
+    else
+      h1 Hello, World!
     ul#account
       if user
         li
@@ -14,7 +16,7 @@ html
           a(href='/auth/login') Login
         li
           a(href='/auth/register') Register
-      h1
+      h2
         a(href='/topic') Server Side Javascript
     ul
       each topic in topics
