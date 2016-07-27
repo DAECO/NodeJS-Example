@@ -3,6 +3,8 @@ html
   head
     meta(charset='utf-8')
   body
+    if user
+      h1 Hello, #{user.displayName}
     ul#account
       if user
         li

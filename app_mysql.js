@@ -7,5 +7,5 @@ var topic = require('./routes/mysql/topic')();
 app.use('/topic', topic);
 
 app.listen(3003, function(){
-  console.log('Connected, 3000 port!');
+  console.log('Connected, 3003 port!');
 });
