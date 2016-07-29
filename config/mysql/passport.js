@@ -4,6 +4,7 @@ module.exports = function(app){
   var passport = require('passport')
   var LocalStrategy = require('passport-local').Strategy;
   var FacebookStrategy = require('passport-facebook').Strategy;
+  var KakaoStrategy = require('passport-kakao').Strategy;
   var hasher = bkfd2Password();
 
   app.use(passport.initialize());
@@ -81,5 +82,17 @@ module.exports = function(app){
       });
     }
   ));
+
+  passport.use(new KakaoStrategy({
+      clientID : 'a5c45aec504b796b4f4363dbabc8878d',
+      callbackURL : '/oauth'
+    },
+    function(accessToken, refreshToken, profile, done){
+      console.log('kakao profile: ',profile);
+      // 사용자의 정보는 profile에 들어있다.
+
+    }
+  ));
+
   return passport;
 }

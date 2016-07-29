@@ -18,8 +18,8 @@ html
           a(href='/auth/register') Register
       h2
         a(href='/topic') Server Side Javascript
-    ul
-      each topic in topics
-        li
-          a(href='/topic/'+topic.id)= topic.title
-    block content
+      ul
+        each topic in topics
+          li
+            a(href='/topic/'+topic.id)= topic.title
+      block content

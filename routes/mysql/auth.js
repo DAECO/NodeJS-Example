@@ -81,5 +81,14 @@ module.exports = function(passport){
       }
     )
   );
+
+  route.get('/kakao', passport.authenticate('kakao',{
+      failureRedirect: '/login'
+  }));
+
+  route.get('/oauth', passport.authenticate('kakao', {
+      failureRedirect: '/login'
+  }));
+
   return route;
 }
