@@ -82,13 +82,26 @@ module.exports = function(passport){
     )
   );
 
-  route.get('/kakao', passport.authenticate('kakao',{
-      failureRedirect: '/login'
-  }));
+  route.get(
+    '/kakao',
+    passport.authenticate(
+      'kakao',
+      {
+        failureRedirect: '/login'
+      }
+    )
+  );
 
-  route.get('/oauth', passport.authenticate('kakao', {
-      failureRedirect: '/login'
-  }));
+  route.get(
+    '/oauth',
+    passport.authenticate(
+      'kakao',
+      {
+        successRedirect: '/topic',
+        failureRedirect: '/login'
+      }
+    )
+  );
 
   return route;
 }

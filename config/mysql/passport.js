@@ -88,9 +88,29 @@ module.exports = function(app){
       callbackURL : '/oauth'
     },
     function(accessToken, refreshToken, profile, done){
-      console.log('kakao profile: ',profile);
-      // 사용자의 정보는 profile에 들어있다.
-
+      //console.log('kakao profile: ',profile.id);
+      var authId = 'kakao:'+profile.id;
+      var sql = 'SELECT * FROM users WHERE authId=?';
+      conn.query(sql, [authId], function(err, results){
+        if(results.length > 0){
+          done(null, results[0]);
+        } else {
+          var newuser = {
+            'authId':authId,
+            'displayName':profile._json.properties.nickname,
+            'email':'abc@naver.com'
+          };
+          var sql = 'INSERT INTO users SET ?';
+          conn.query(sql, newuser, function(err, results){
+            if(err){
+              console.log(err);
+              done('Error');
+            } else {
+              done(null, newuser);
+            }
+          });
+        }
+      });
     }
   ));
 
