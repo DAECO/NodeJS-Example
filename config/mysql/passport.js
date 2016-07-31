@@ -88,7 +88,7 @@ module.exports = function(app){
       callbackURL : '/oauth'
     },
     function(accessToken, refreshToken, profile, done){
-      //console.log('kakao profile: ',profile.id);
+      console.log('kakao profile: ',profile.id);
       var authId = 'kakao:'+profile.id;
       var sql = 'SELECT * FROM users WHERE authId=?';
       conn.query(sql, [authId], function(err, results){
@@ -98,7 +98,7 @@ module.exports = function(app){
           var newuser = {
             'authId':authId,
             'displayName':profile._json.properties.nickname,
-            'email':'abc@naver.com'
+            'email':'abc@naver.com',
           };
           var sql = 'INSERT INTO users SET ?';
           conn.query(sql, newuser, function(err, results){
@@ -106,6 +106,8 @@ module.exports = function(app){
               console.log(err);
               done('Error');
             } else {
+              var img = profile._json.properties.img;
+              newuser.push(img);
               done(null, newuser);
             }
           });
