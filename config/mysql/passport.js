@@ -88,11 +88,14 @@ module.exports = function(app){
       callbackURL : '/oauth'
     },
     function(accessToken, refreshToken, profile, done){
-      console.log('kakao profile: ',profile.id);
+      console.log('kakao profile: ',profile);
+      var img = profile._json.properties.profile_image;
       var authId = 'kakao:'+profile.id;
       var sql = 'SELECT * FROM users WHERE authId=?';
       conn.query(sql, [authId], function(err, results){
         if(results.length > 0){
+          results[0].img = img;
+          console.log('results: ', results[0]);
           done(null, results[0]);
         } else {
           var newuser = {
@@ -106,8 +109,7 @@ module.exports = function(app){
               console.log(err);
               done('Error');
             } else {
-              var img = profile._json.properties.img;
-              newuser.push(img);
+              newuser.img = img;
               done(null, newuser);
             }
           });
